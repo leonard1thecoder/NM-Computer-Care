@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-geist-sans);
+  }
+}
+
+/* Dark Purple Theme Enhancements */
+body {
+  background-color: #1a0f2e;
+  color: #f3e8ff;
+}
