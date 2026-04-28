@@ -1,13 +1,12 @@
 'use client';
 
 import Navbar from '../components/Navbar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   Star,
   Clock,
   Shield,
   Award,
-  CheckCircle,
   MessageCircle,
   X,
   Send,
@@ -29,7 +28,7 @@ import {
 // ── Inline SVG social icons (no external image deps) ──────────────────────────
 const FacebookIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="36" height="36" rx="8" fill="#1877F2"/>
+    <rect width="36" height="36" rx="8" fill="#1877F2" />
     <path
       d="M24.75 18H20.5V28H16.5V18H13.5V14.5H16.5V12.25C16.5 9.38 18.13 7.75 20.76 7.75C21.52 7.75 22.38 7.87 23.25 8V11.25H21.5C20.25 11.25 20.5 11.88 20.5 12.63V14.5H23.75L24.75 18Z"
       fill="white"
@@ -41,23 +40,23 @@ const InstagramIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <radialGradient id="ig-grad-home" cx="30%" cy="107%" r="130%">
-        <stop offset="0%" stopColor="#ffd600"/>
-        <stop offset="20%" stopColor="#ff7a00"/>
-        <stop offset="40%" stopColor="#ff0069"/>
-        <stop offset="70%" stopColor="#d300c5"/>
-        <stop offset="100%" stopColor="#7638fa"/>
+        <stop offset="0%" stopColor="#ffd600" />
+        <stop offset="20%" stopColor="#ff7a00" />
+        <stop offset="40%" stopColor="#ff0069" />
+        <stop offset="70%" stopColor="#d300c5" />
+        <stop offset="100%" stopColor="#7638fa" />
       </radialGradient>
     </defs>
-    <rect width="36" height="36" rx="8" fill="url(#ig-grad-home)"/>
-    <rect x="10" y="10" width="16" height="16" rx="5" stroke="white" strokeWidth="1.8" fill="none"/>
-    <circle cx="18" cy="18" r="4" stroke="white" strokeWidth="1.8" fill="none"/>
-    <circle cx="23.5" cy="12.5" r="1.1" fill="white"/>
+    <rect width="36" height="36" rx="8" fill="url(#ig-grad-home)" />
+    <rect x="10" y="10" width="16" height="16" rx="5" stroke="white" strokeWidth="1.8" fill="none" />
+    <circle cx="18" cy="18" r="4" stroke="white" strokeWidth="1.8" fill="none" />
+    <circle cx="23.5" cy="12.5" r="1.1" fill="white" />
   </svg>
 );
 
 const XIcon = () => (
   <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="36" height="36" rx="8" fill="#000"/>
+    <rect width="36" height="36" rx="8" fill="#000" />
     <path
       d="M20.18 16.7L26.38 9.5H24.88L19.5 15.77L15.18 9.5H9.75L16.25 18.97L9.75 26.5H11.25L16.93 19.93L21.5 26.5H26.93L20.18 16.7ZM17.68 19.07L17.01 18.1L11.8 10.63H14.45L18.27 16.14L18.94 17.11L24.39 24.93H21.74L17.68 19.07Z"
       fill="white"
@@ -81,6 +80,11 @@ type Testimonial = {
   rating: number;
 };
 
+type ChatMessage = {
+  type: 'bot' | 'user';
+  text: string;
+};
+
 const initialForm: FormState = {
   name: '',
   email: '',
@@ -88,6 +92,10 @@ const initialForm: FormState = {
   service: '',
   message: '',
 };
+
+const initialChatMessages: ChatMessage[] = [
+  { type: 'bot', text: "Hi! 👋 I'm NM Bot. How can I help you today?" },
+];
 
 export default function Home() {
   const [showModal, setShowModal] = useState(false);
@@ -99,9 +107,7 @@ export default function Home() {
   const [subscribed, setSubscribed] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { type: 'bot' as const, text: "Hi! 👋 I'm NM Bot. How can I help you today?" },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialChatMessages);
   const [userInput, setUserInput] = useState('');
   const chatRef = useRef<HTMLDivElement>(null);
 
@@ -148,19 +154,21 @@ export default function Home() {
     return true;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const key = name as keyof FormState;
     setFormData((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) validateField(key, value);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
     let valid = true;
     (Object.keys(formData) as (keyof FormState)[]).forEach((key) => {
       if (!validateField(key, formData[key])) valid = false;
     });
+
     if (!valid) return;
 
     setIsSubmitting(true);
@@ -173,9 +181,10 @@ export default function Home() {
 
   const closePopup = () => setPopup({ show: false, success: true });
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail.trim()) return;
+
     setSubscribed(true);
     setTimeout(() => {
       setSubscribed(false);
@@ -185,15 +194,26 @@ export default function Home() {
 
   const sendMessage = () => {
     if (!userInput.trim()) return;
-    setChatMessages((prev) => [...prev, { type: 'user', text: userInput }]);
-    const query = userInput.toLowerCase();
+
+    const messageToSend = userInput.trim();
+    setChatMessages((prev) => [...prev, { type: 'user', text: messageToSend }]);
+
+    const query = messageToSend.toLowerCase();
+
     setTimeout(() => {
       let reply = 'Thank you! Our team will reply shortly.';
-      if (query.includes('price') || query.includes('pricing')) reply = 'Plans start from R299. Want me to show you the best option?';
-      else if (query.includes('windows') || query.includes('upgrade')) reply = 'Yes, we do clean Windows upgrades with backup checks.';
-      else if (query.includes('repair')) reply = 'We handle laptop and PC repairs, diagnostics, and same-day support where possible.';
+
+      if (query.includes('price') || query.includes('pricing')) {
+        reply = 'Plans start from R299. Want me to show you the best option?';
+      } else if (query.includes('windows') || query.includes('upgrade')) {
+        reply = 'Yes, we do clean Windows upgrades with backup checks.';
+      } else if (query.includes('repair')) {
+        reply = 'We handle laptop and PC repairs, diagnostics, and same-day support where possible.';
+      }
+
       setChatMessages((prev) => [...prev, { type: 'bot', text: reply }]);
     }, 700);
+
     setUserInput('');
   };
 
@@ -205,20 +225,34 @@ export default function Home() {
       <main className="nm-shell">
         <section className="nm-hero">
           <div className="nm-hero-copy">
-            <div className="nm-kicker"><Sparkles size={14} /> Dashboard-style tech care</div>
+            <div className="nm-kicker">
+              <Sparkles size={14} /> Dashboard-style tech care
+            </div>
             <h1>NM Computer Care</h1>
             <p>
               Fast repairs, performance upgrades, cloud solutions, and a clean client experience built to feel as polished as an admin dashboard.
             </p>
             <div className="nm-hero-actions">
-              <a href="#services" className="nm-btn nm-btn--primary">View Services <ArrowRight size={16} /></a>
-              <a href="#pricing" className="nm-btn nm-btn--ghost">Pricing Plans</a>
+              <a href="#services" className="nm-btn nm-btn--primary">
+                View Services <ArrowRight size={16} />
+              </a>
+              <a href="#pricing" className="nm-btn nm-btn--ghost">
+                Pricing Plans
+              </a>
             </div>
             <div className="nm-trust-row">
-              <div className="nm-trust-item"><Clock size={16} /> Fast turnaround</div>
-              <div className="nm-trust-item"><Shield size={16} /> Data protection</div>
-              <div className="nm-trust-item"><Award size={16} /> Satisfaction focus</div>
-              <div className="nm-trust-item"><BadgeCheck size={16} /> Certified technicians</div>
+              <div className="nm-trust-item">
+                <Clock size={16} /> Fast turnaround
+              </div>
+              <div className="nm-trust-item">
+                <Shield size={16} /> Data protection
+              </div>
+              <div className="nm-trust-item">
+                <Award size={16} /> Satisfaction focus
+              </div>
+              <div className="nm-trust-item">
+                <BadgeCheck size={16} /> Certified technicians
+              </div>
             </div>
           </div>
 
@@ -228,25 +262,61 @@ export default function Home() {
                 <p className="nm-mini-label">Live support</p>
                 <h2>Everything feels structured, clear, and premium.</h2>
               </div>
-              <div className="nm-hero-chip"><Activity size={14} /> Online</div>
+              <div className="nm-hero-chip">
+                <Activity size={14} /> Online
+              </div>
             </div>
             <div className="nm-stats-grid">
-              <div className="nm-stat-card"><span>Projects</span><strong>214</strong></div>
-              <div className="nm-stat-card"><span>Subscribers</span><strong>856</strong></div>
-              <div className="nm-stat-card"><span>Response time</span><strong>Under 2h</strong></div>
-              <div className="nm-stat-card"><span>Support score</span><strong>4.9/5</strong></div>
+              <div className="nm-stat-card">
+                <span>Projects</span>
+                <strong>214</strong>
+              </div>
+              <div className="nm-stat-card">
+                <span>Subscribers</span>
+                <strong>856</strong>
+              </div>
+              <div className="nm-stat-card">
+                <span>Response time</span>
+                <strong>Under 2h</strong>
+              </div>
+              <div className="nm-stat-card">
+                <span>Support score</span>
+                <strong>4.9/5</strong>
+              </div>
             </div>
             <div className="nm-hero-panel-bottom">
-              <div className="nm-hero-check"><CircleDollarSign size={16} /> Honest pricing</div>
-              <div className="nm-hero-check"><TriangleAlert size={16} /> Safer diagnostics</div>
+              <div className="nm-hero-check">
+                <CircleDollarSign size={16} /> Honest pricing
+              </div>
+              <div className="nm-hero-check">
+                <TriangleAlert size={16} /> Safer diagnostics
+              </div>
             </div>
           </div>
         </section>
 
         <section className="nm-strip">
-          <div className="nm-strip-card"><Users size={18} /><div><strong>Trusted by South Africans</strong><span>Small business, students, and home users</span></div></div>
-          <div className="nm-strip-card"><Shield size={18} /><div><strong>Secure workflows</strong><span>Backup-first approach on every repair</span></div></div>
-          <div className="nm-strip-card"><Zap size={18} /><div><strong>Performance uplift</strong><span>Upgrade aging devices without the chaos</span></div></div>
+          <div className="nm-strip-card">
+            <Users size={18} />
+            <div>
+              <strong>Trusted by South Africans</strong>
+              <span>Small business, students, and home users</span>
+            </div>
+          </div>
+          <div className="nm-strip-card">
+            <Shield size={18} />
+            <div>
+              <strong>Secure workflows</strong>
+              <span>Backup-first approach on every repair</span>
+            </div>
+          </div>
+          <div className="nm-strip-card">
+            <Zap size={18} />
+            <div>
+              <strong>Performance uplift</strong>
+              <span>Upgrade aging devices without the chaos</span>
+            </div>
+          </div>
         </section>
 
         <section id="about" className="nm-section nm-section--split">
@@ -254,14 +324,28 @@ export default function Home() {
             <div className="nm-section-tag">About us</div>
             <h2>Expert Tech Care in South Africa</h2>
             <p>We fix, upgrade, and future-proof your computers and laptops with honesty, speed, and a premium support flow that matches the rest of the project.</p>
-            <div className="nm-quote"><p>"Reliable service with honest pricing."</p><span>— Satisfied Customer, Durban</span></div>
+            <div className="nm-quote">
+              <p>"Reliable service with honest pricing."</p>
+              <span>— Satisfied Customer, Durban</span>
+            </div>
           </div>
           <div className="nm-panel-visual">
-            <div className="nm-visual-badge"><Laptop size={16} /> Modern repair experience</div>
+            <div className="nm-visual-badge">
+              <Laptop size={16} /> Modern repair experience
+            </div>
             <div className="nm-visual-stack">
-              <div className="nm-visual-card"><strong>Assessment</strong><span>We inspect, diagnose, and plan the right fix.</span></div>
-              <div className="nm-visual-card"><strong>Repair</strong><span>Fast hands-on support with clear communication.</span></div>
-              <div className="nm-visual-card"><strong>Follow-up</strong><span>We make sure the device stays stable and secure.</span></div>
+              <div className="nm-visual-card">
+                <strong>Assessment</strong>
+                <span>We inspect, diagnose, and plan the right fix.</span>
+              </div>
+              <div className="nm-visual-card">
+                <strong>Repair</strong>
+                <span>Fast hands-on support with clear communication.</span>
+              </div>
+              <div className="nm-visual-card">
+                <strong>Follow-up</strong>
+                <span>We make sure the device stays stable and secure.</span>
+              </div>
             </div>
           </div>
         </section>
@@ -290,18 +374,36 @@ export default function Home() {
             <div className="nm-section-tag">Values</div>
             <h2>Our Core Values</h2>
             <div className="nm-values">
-              <div><strong>Reliability</strong><span>We do what we promise</span></div>
-              <div><strong>Integrity</strong><span>Honest pricing and clear communication</span></div>
-              <div><strong>Customer Care</strong><span>Every client is treated like family</span></div>
-              <div><strong>Expertise</strong><span>We keep learning the latest technology</span></div>
-              <div><strong>Affordability</strong><span>Quality support for everyone</span></div>
+              <div>
+                <strong>Reliability</strong>
+                <span>We do what we promise</span>
+              </div>
+              <div>
+                <strong>Integrity</strong>
+                <span>Honest pricing and clear communication</span>
+              </div>
+              <div>
+                <strong>Customer Care</strong>
+                <span>Every client is treated like family</span>
+              </div>
+              <div>
+                <strong>Expertise</strong>
+                <span>We keep learning the latest technology</span>
+              </div>
+              <div>
+                <strong>Affordability</strong>
+                <span>Quality support for everyone</span>
+              </div>
             </div>
           </div>
         </section>
 
         <section id="services" className="nm-section">
           <div className="nm-section-head">
-            <div><div className="nm-section-tag">Services</div><h2>Our Services</h2></div>
+            <div>
+              <div className="nm-section-tag">Services</div>
+              <h2>Our Services</h2>
+            </div>
             <p>Beautiful, fast, and practical service cards that match the dashboard aesthetic.</p>
           </div>
           <div className="nm-service-grid">
@@ -309,10 +411,17 @@ export default function Home() {
               const Icon = service.icon;
               return (
                 <div key={service.title} className="nm-service-card">
-                  <div className="nm-service-top"><div className="nm-service-icon"><Icon size={18} /></div><span>{service.badge}</span></div>
+                  <div className="nm-service-top">
+                    <div className="nm-service-icon">
+                      <Icon size={18} />
+                    </div>
+                    <span>{service.badge}</span>
+                  </div>
                   <h3>{service.title}</h3>
                   <p>{service.desc}</p>
-                  <button onClick={() => setShowModal(true)} className="nm-link-btn">Learn More <ArrowRight size={16} /></button>
+                  <button onClick={() => setShowModal(true)} className="nm-link-btn">
+                    Learn More <ArrowRight size={16} />
+                  </button>
                 </div>
               );
             })}
@@ -321,35 +430,97 @@ export default function Home() {
 
         <section id="pricing" className="nm-section">
           <div className="nm-section-head">
-            <div><div className="nm-section-tag">Pricing</div><h2>Our Pricing Plans</h2></div>
+            <div>
+              <div className="nm-section-tag">Pricing</div>
+              <h2>Our Pricing Plans</h2>
+            </div>
             <p>Clear cards with strong hierarchy, like a polished admin dashboard.</p>
           </div>
           <div className="nm-pricing-grid">
             <div className="nm-price-card">
-              <div className="nm-price-top"><div className="nm-price-icon"><Laptop size={18} /></div><div><h3>Basic Care</h3><p>Home users, students, small SOHO</p></div></div>
-              <ul><li>• Troubleshooting & diagnostics</li><li>• Software fixes & virus removal</li><li>• Windows 7/10 → 11 upgrades</li><li>• Basic performance tune-up</li></ul>
-              <div className="nm-price-amount"><strong>R299 – R399</strong><span>One-time setup: R250</span></div>
-              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">Choose Basic Care</a>
+              <div className="nm-price-top">
+                <div className="nm-price-icon">
+                  <Laptop size={18} />
+                </div>
+                <div>
+                  <h3>Basic Care</h3>
+                  <p>Home users, students, small SOHO</p>
+                </div>
+              </div>
+              <ul>
+                <li>• Troubleshooting & diagnostics</li>
+                <li>• Software fixes & virus removal</li>
+                <li>• Windows 7/10 → 11 upgrades</li>
+                <li>• Basic performance tune-up</li>
+              </ul>
+              <div className="nm-price-amount">
+                <strong>R299 – R399</strong>
+                <span>One-time setup: R250</span>
+              </div>
+              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">
+                Choose Basic Care
+              </a>
             </div>
+
             <div className="nm-price-card nm-price-card--featured">
               <div className="nm-badge">MOST POPULAR</div>
-              <div className="nm-price-top"><div className="nm-price-icon"><Sparkles size={18} /></div><div><h3>Performance Care</h3><p>Gamers, freelancers, small offices</p></div></div>
-              <ul><li>• Everything in Basic Care</li><li>• Hardware diagnosis & upgrades</li><li>• Data backup & recovery</li><li>• Full system optimization</li></ul>
-              <div className="nm-price-amount"><strong>R499 – R699</strong><span>One-time setup: R450</span></div>
-              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">Choose Performance Care</a>
+              <div className="nm-price-top">
+                <div className="nm-price-icon">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <h3>Performance Care</h3>
+                  <p>Gamers, freelancers, small offices</p>
+                </div>
+              </div>
+              <ul>
+                <li>• Everything in Basic Care</li>
+                <li>• Hardware diagnosis & upgrades</li>
+                <li>• Data backup & recovery</li>
+                <li>• Full system optimization</li>
+              </ul>
+              <div className="nm-price-amount">
+                <strong>R499 – R699</strong>
+                <span>One-time setup: R450</span>
+              </div>
+              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">
+                Choose Performance Care
+              </a>
             </div>
+
             <div className="nm-price-card">
-              <div className="nm-price-top"><div className="nm-price-icon"><Server size={18} /></div><div><h3>Business Care</h3><p>Small businesses (5–20 devices)</p></div></div>
-              <ul><li>• Everything in Performance Care</li><li>• On-site or remote support (2 hours/month)</li><li>• Network setup & Wi-Fi optimization</li><li>• Preventive maintenance</li></ul>
-              <div className="nm-price-amount"><strong>R899 – R1,299</strong><span>One-time setup: R750</span></div>
-              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">Choose Business Care</a>
+              <div className="nm-price-top">
+                <div className="nm-price-icon">
+                  <Server size={18} />
+                </div>
+                <div>
+                  <h3>Business Care</h3>
+                  <p>Small businesses (5–20 devices)</p>
+                </div>
+              </div>
+              <ul>
+                <li>• Everything in Performance Care</li>
+                <li>• On-site or remote support (2 hours/month)</li>
+                <li>• Network setup & Wi-Fi optimization</li>
+                <li>• Preventive maintenance</li>
+              </ul>
+              <div className="nm-price-amount">
+                <strong>R899 – R1,299</strong>
+                <span>One-time setup: R750</span>
+              </div>
+              <a href="/register" className="nm-btn nm-btn--primary nm-btn--full">
+                Choose Business Care
+              </a>
             </div>
           </div>
         </section>
 
         <section id="founders" className="nm-section">
           <div className="nm-section-head">
-            <div><div className="nm-section-tag">Founders</div><h2>Meet Our Co-Founders</h2></div>
+            <div>
+              <div className="nm-section-tag">Founders</div>
+              <h2>Meet Our Co-Founders</h2>
+            </div>
             <p>Faces behind the brand, presented in a structured layout.</p>
           </div>
           <div className="nm-founders-grid">
@@ -368,7 +539,10 @@ export default function Home() {
 
         <section className="nm-section">
           <div className="nm-section-head">
-            <div><div className="nm-section-tag">Testimonials</div><h2>What Our Customers Say</h2></div>
+            <div>
+              <div className="nm-section-tag">Testimonials</div>
+              <h2>What Our Customers Say</h2>
+            </div>
             <p>Rotating testimonials in a clean carousel card.</p>
           </div>
           <div className="nm-testimonial-shell">
@@ -393,23 +567,66 @@ export default function Home() {
             <h2>Ready to Fix or Upgrade Your Tech?</h2>
             <p>Get a free diagnosis or book your service today.</p>
           </div>
+
           <form onSubmit={handleSubmit} noValidate className="nm-form-card">
             <div className="nm-form-grid">
-              <input name="name" placeholder="Your Name" value={formData.name} onChange={handleInputChange} className={errors.name ? 'nm-input nm-input--error' : 'nm-input'} required />
-              <input name="email" type="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} className={errors.email ? 'nm-input nm-input--error' : 'nm-input'} required />
-              <input name="phone" placeholder="Phone / WhatsApp" value={formData.phone} onChange={handleInputChange} className={errors.phone ? 'nm-input nm-input--error' : 'nm-input'} />
-              <select name="service" value={formData.service} onChange={handleInputChange} className={errors.service ? 'nm-input nm-input--error' : 'nm-input'}>
+              <input
+                name="name"
+                placeholder="Your Name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={errors.name ? 'nm-input nm-input--error' : 'nm-input'}
+                required
+              />
+              <input
+                name="email"
+                type="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={errors.email ? 'nm-input nm-input--error' : 'nm-input'}
+                required
+              />
+              <input
+                name="phone"
+                placeholder="Phone / WhatsApp"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className={errors.phone ? 'nm-input nm-input--error' : 'nm-input'}
+              />
+              <select
+                name="service"
+                value={formData.service}
+                onChange={handleInputChange}
+                className={errors.service ? 'nm-input nm-input--error' : 'nm-input'}
+              >
                 <option value="">Select Service</option>
                 <option value="Basic Care">Basic Care</option>
                 <option value="Performance Care">Performance Care</option>
                 <option value="Business Care">Business Care</option>
               </select>
             </div>
-            <textarea name="message" placeholder="Describe your problem..." rows={5} value={formData.message} onChange={handleInputChange} className={errors.message ? 'nm-input nm-input--error nm-textarea' : 'nm-input nm-textarea'} required />
+
+            <textarea
+              name="message"
+              placeholder="Describe your problem..."
+              rows={5}
+              value={formData.message}
+              onChange={handleInputChange}
+              className={errors.message ? 'nm-input nm-input--error nm-textarea' : 'nm-input nm-textarea'}
+              required
+            />
+
             {isSubmitting ? (
-              <div className="nm-spinner-wrap"><div className="nm-spinner"><span /></div></div>
+              <div className="nm-spinner-wrap">
+                <div className="nm-spinner">
+                  <span />
+                </div>
+              </div>
             ) : (
-              <button type="submit" className="nm-btn nm-btn--primary nm-btn--full">Send Message</button>
+              <button type="submit" className="nm-btn nm-btn--primary nm-btn--full">
+                Send Message
+              </button>
             )}
           </form>
         </section>
@@ -420,10 +637,20 @@ export default function Home() {
             <h3>Stay Updated</h3>
             <p>Subscribe for tech tips and special offers.</p>
           </div>
+
           {!subscribed ? (
             <form onSubmit={handleNewsletterSubmit} className="nm-newsletter-form">
-              <input type="email" value={newsletterEmail} onChange={(e) => setNewsletterEmail(e.target.value)} placeholder="Enter your email" required className="nm-newsletter-input" />
-              <button type="submit" className="nm-btn nm-btn--gold">Subscribe</button>
+              <input
+                type="email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="nm-newsletter-input"
+              />
+              <button type="submit" className="nm-btn nm-btn--gold">
+                Subscribe
+              </button>
             </form>
           ) : (
             <div className="nm-subscribed">✅ Thank you for subscribing!</div>
@@ -435,6 +662,7 @@ export default function Home() {
             <h3>NM Computer Care</h3>
             <p>South Africa • Professional Tech Support</p>
           </div>
+
           <div className="nm-socials">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
               <FacebookIcon />
@@ -446,6 +674,7 @@ export default function Home() {
               <XIcon />
             </a>
           </div>
+
           <p className="nm-footer-copy">© 2026 All Rights Reserved</p>
         </footer>
       </main>
@@ -461,10 +690,16 @@ export default function Home() {
             <div className="nm-chat-head">
               <div className="nm-chat-head-left">
                 <div className="nm-chat-badge">NM</div>
-                <div><p>NM Support</p><span>Online now</span></div>
+                <div>
+                  <p>NM Support</p>
+                  <span>Online now</span>
+                </div>
               </div>
-              <button onClick={() => setIsChatOpen(false)} aria-label="Close chat"><X size={20} /></button>
+              <button onClick={() => setIsChatOpen(false)} aria-label="Close chat">
+                <X size={20} />
+              </button>
             </div>
+
             <div ref={chatRef} className="nm-chat-messages">
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`nm-chat-row ${msg.type === 'user' ? 'nm-chat-row--user' : ''}`}>
@@ -472,9 +707,19 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
             <div className="nm-chat-input-row">
-              <input type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage()} placeholder="Type your message..." className="nm-chat-input" />
-              <button onClick={sendMessage} className="nm-chat-send" aria-label="Send message"><Send size={18} /></button>
+              <input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                placeholder="Type your message..."
+                className="nm-chat-input"
+              />
+              <button onClick={sendMessage} className="nm-chat-send" aria-label="Send message">
+                <Send size={18} />
+              </button>
             </div>
           </div>
         )}
@@ -483,10 +728,14 @@ export default function Home() {
       {popup.show && (
         <div className="nm-modal-backdrop">
           <div className="nm-modal-card">
-            <div className={`nm-modal-icon ${popup.success ? 'nm-modal-icon--success' : 'nm-modal-icon--error'}`}>{popup.success ? '😊' : '😠'}</div>
+            <div className={`nm-modal-icon ${popup.success ? 'nm-modal-icon--success' : 'nm-modal-icon--error'}`}>
+              {popup.success ? '😊' : '😠'}
+            </div>
             <h3>{popup.success ? 'Request Sent!' : 'Request Failed'}</h3>
             <p>{popup.success ? 'Your message has been sent successfully. We will get back to you soon.' : 'Something went wrong. Please try again later.'}</p>
-            <button onClick={closePopup} className="nm-btn nm-btn--primary nm-btn--full">Close</button>
+            <button onClick={closePopup} className="nm-btn nm-btn--primary nm-btn--full">
+              Close
+            </button>
           </div>
         </div>
       )}
@@ -496,7 +745,9 @@ export default function Home() {
           <div className="nm-modal-card nm-modal-card--simple">
             <h3>Service Details</h3>
             <p>Our expert team will provide a full diagnosis and clear quote.</p>
-            <button onClick={() => setShowModal(false)} className="nm-btn nm-btn--primary nm-btn--full">Close</button>
+            <button onClick={() => setShowModal(false)} className="nm-btn nm-btn--primary nm-btn--full">
+              Close
+            </button>
           </div>
         </div>
       )}

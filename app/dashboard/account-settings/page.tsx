@@ -16,7 +16,7 @@ import { Check, X } from 'lucide-react';
  * Replace API endpoints with your real endpoints as needed.
  */
 
-export default function AccountSettingsPage(): JSX.Element {
+export default function AccountSettingsPage() {
   /* --- Email state --- */
   const [email, setEmail] = useState('');
   const [emailConfirm, setEmailConfirm] = useState('');
