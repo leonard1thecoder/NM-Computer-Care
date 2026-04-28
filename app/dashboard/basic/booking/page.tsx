@@ -8,7 +8,7 @@ type DeviceType = 'pc' | 'laptop';
 type YesNo = 'yes' | 'no';
 type PlanStep = 1 | 2 | 3;
 
-export default function BasicBookingPage(): JSX.Element {
+export default function BasicBookingPage() {
   const [step, setStep] = useState<PlanStep>(1);
 
   // Step 1

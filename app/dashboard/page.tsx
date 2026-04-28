@@ -908,7 +908,10 @@ function BookingForm({ onClose, planKey }: { onClose: () => void; planKey: PlanK
           </div>
         ))}
         <div className="nm-step-track">
-          <div className="nm-step-fill" style={{ width: `${maxSteps === 1 ? 100 : ((step - 1) / (maxSteps - 1)) * 100}%` }} />
+<div
+  className="nm-step-fill"
+  style={{ width: `${((step - 1) / (maxSteps - 1)) * 100}%` }}
+/>
         </div>
       </div>
 
